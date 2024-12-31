@@ -1,0 +1,10 @@
+{
+  "id": "python-commander",
+  "name": "Python Commander",
+  "version": "0.1.0",
+  "minAppVersion": "0.14.0",
+  "description": "Make python command from selection.",
+  "author": "0.0-0.o",
+  "isDesktopOnly": true,
+  "type": "module"
+}

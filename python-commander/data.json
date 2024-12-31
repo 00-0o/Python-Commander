@@ -1,0 +1,12 @@
+{
+  "pythonExecutable": "/home/pi/WorkBench/WorkBench/.venv/bin/python3",
+  "useModal": false,
+  "showModal": false,
+  "passSelectedText": false,
+  "modal_out": true,
+  "cursor_out": true,
+  "outputNoteName": "Python Console.md",
+  "note_out": true,
+  "console_log": true,
+  "pythonScriptFolder": "/home/pi/WorkBench/WorkBench/scripts/python"
+}
