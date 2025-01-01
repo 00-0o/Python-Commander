@@ -58,7 +58,7 @@ my_first_command()            #    REMEMBER to CALL your function!!
 ##### <font color="#e36c09">2 º Select the text for of script (only the python code, # comments are ok) </font>
 ##### <span style="background:#9254de">def my_first_command():</span>
 
-##### <span style="background:#9254de">............print("Python Commander")</span>
+##### <span style="background:#9254de">		print("Python Commander")</span>
 
 ##### <span style="background:#9254de">my_first_command() #    REMEMBER to CALL your function!! </span>
 
