@@ -96,9 +96,6 @@ class PythonCommander extends Plugin {
       }
     });
 
-    this.loadFunctions();
-    this.addSettingTab(new PythonCommanderSettingTab(this.app, this));
-
     // NEW Command: Run Selected Python Text
     this.addCommand({
       id: 'run-selected-python-text',
