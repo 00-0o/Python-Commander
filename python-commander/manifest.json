@@ -1,9 +1,9 @@
 {
   "id": "python-commander",
   "name": "Python Commander",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "minAppVersion": "0.14.0",
-  "description": "Make python command from selection.",
+  "description": "Make python commands, add them to command palette, run python code from obsidian, and much more.",
   "author": "0.0-0.o",
   "isDesktopOnly": true,
   "type": "module"
