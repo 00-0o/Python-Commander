@@ -1,7 +1,21 @@
 Python Commander is an Obsidian plugin that allow to create, manage, and run python "modules/commands" from the command palette.
+ 
+Run text/code selected from any obsidian note without having to add a code block.
+ 
+it runs on editing and reading mode, run python on Canvas and Kanvan. 
+
+Just create a command Once on any note. And then call it wherever you want from the command palette. (You can delete the notes once a command is created) 
+Manage your commands from the settings.  
+
+It kind of allow you to use obsidian as an an IDE project manager, you can create modules-commands import them from other modules-commands and run them from the palette.
+  
 Python commander is a work in progress plugin, give some feedback, testers are very welcome.
-tested linux only but it might work fine on any platform. 
-If you find any issues let me know. (But be sure you CALLED your functions!!)   
+
+Tested linux only for now but it might work fine on any platform. 
+
+If you find any issues let me know. (But be sure you CALLED "func()" your functions prior to open an issue!!) 
+
+Down bellow you have the doc/tutorial for now. Giff banners (Video tutorial comming soon)  Work in progress!  
 
  # <center><font color="#00b050" size="6">Python Comander Introduction.</font></center>
 
