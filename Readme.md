@@ -87,7 +87,7 @@ Alternatively to edit your scripts, navigate to your scripts folder and edit the
 The command folders are inside your scripts folder from settings, one for each command you have registered. 
 
 
-<center><font color="#00b050" size="6">How to use Python Commander</font></center>
+### How to use Python Commander
 
 First you have to set the path to your python executable in the settings.
 
