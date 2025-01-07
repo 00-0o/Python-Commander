@@ -1,3 +1,8 @@
+Python Commander is an Obsidian plugin that allow to create, manage, and run python "modules/commands" from the command palette.
+Python commander is a work in progress plugin, give some feedback, testers are very welcome.
+tested linux only but it might work fine on any platform. 
+If you find any issues let me know. (But be sure you CALLED your functions!!)   
+
  # <center><font color="#00b050" size="6">Python Comander Introduction.</font></center>
 
 Python Commander has two main execution modes.
