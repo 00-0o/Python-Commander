@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "minAppVersion": "0.14.0",
   "description": "Make python commands, add them to command palette, run python code from obsidian, and much more.",
-  "author": "0.0-0.o",
+  "author": "00-0o",
   "isDesktopOnly": true,
   "type": "module",
   "repo": "https://github.com/00-0o/Python-Commander.git",
