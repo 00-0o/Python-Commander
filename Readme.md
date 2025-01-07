@@ -4,7 +4,9 @@ Run text/code selected from any obsidian note without having to add a code block
  
 it runs on editing and reading mode, run python on Canvas and Kanvan. 
 
-Just create a command Once on any note. And then call it wherever you want from the command palette. (You can delete the notes once a command is created) 
+Just create a command Once on any note, and call it wherever you want from the command palette.
+(You can delete the notes once a command is created) 
+
 Manage your commands from the settings.  
 
 It kind of allow you to use obsidian as an an IDE project manager, you can create modules-commands import them from other modules-commands and run them from the palette.
