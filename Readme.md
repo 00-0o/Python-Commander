@@ -13,7 +13,7 @@ Python commander is a work in progress plugin, give some feedback, testers are v
 
 Tested linux only for now but it might work fine on any platform. 
 
-If you find any issues let me know. (But be sure you CALLED "func()" your functions prior to open an issue!!) 
+If you find any issues let me know. (But be sure you CALLED your functions prior to open an issue!! "your_func()") 
 
 Down bellow you have the doc/tutorial for now. Giff banners (Video tutorial comming soon)  Work in progress!  
 
