@@ -480,7 +480,6 @@ exec(code)
     const vaultPath = this.app.vault.adapter.basePath; // Get the current vault path
     const defaultSettings = {
       pythonExecutable: 'python3',
-      useModal: false,
       showModal: false,
       passSelectedText: false,
       modal_out: true,
