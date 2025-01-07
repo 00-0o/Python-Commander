@@ -2,8 +2,10 @@ const { Plugin, PluginSettingTab, Setting, Modal, Notice } = require('obsidian')
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+const { dialog } = require('electron').remote; // Require Electron's dialog module
 
 // --- Parameter Input Modal ---
+
 class ParameterInputModal extends Modal {
   constructor(app, onSubmit) {
     super(app);
@@ -65,7 +67,7 @@ class CommandNameInputModal extends Modal {
     contentEl.createEl('h2', { text: 'Enter Command Name' });
     this.inputEl = contentEl.createEl('input', {
       type: 'text',
-      placeholder: 'Enter a unique command name'
+      placeholder: 'Enter a unique name without spaces'
     });
 
     const submitBtn = contentEl.createEl('button', { text: 'Save Command' });
@@ -90,7 +92,7 @@ class PythonCommander extends Plugin {
 
     this.addCommand({
       id: 'python-commander',
-      name: 'Make Python Command',
+      name: 'New Python Command',
       editorCallback: (editor) => {
         this.saveTextAsPythonCommand(editor);
       }
@@ -115,116 +117,210 @@ class PythonCommander extends Plugin {
   saveTextAsPythonCommand(editor) {
     const selectedText = editor.getSelection();
     if (!selectedText.trim()) {
-      new Notice('No text selected');
-      return;
+        new Notice('No text selected');
+        return;
     }
 
     // Open the command name input modal
     new CommandNameInputModal(this.app, (commandName) => {
-      if (!commandName) {
-        new Notice('Command name is required');
-        return;
-      }
-
-      // Use the folder path from settings
-      const scriptsDir = this.settings.pythonScriptFolder
-      const functionFolder = path.join(scriptsDir, `.${commandName}`);
-      const scriptFile = path.join(functionFolder, `${commandName}.py`);
-
-      fs.mkdirSync(functionFolder, { recursive: true });
-      fs.writeFileSync(scriptFile, selectedText);
-
-      const jsonFile = path.join(this.app.vault.adapter.basePath, '.obsidian', 'plugins', 'python-commander','functions.json');
-      let functionsDict = {};
-
-      if (fs.existsSync(jsonFile)) {
-        const rawData = fs.readFileSync(jsonFile);
-        functionsDict = JSON.parse(rawData);
-      }
-
-      if (functionsDict[commandName]) {
-        new Notice(`Command '${commandName}' already exists. Choose a unique name.`);
-        return;
-      }
-
-      functionsDict[commandName] = scriptFile;
-      fs.writeFileSync(jsonFile, JSON.stringify(functionsDict, null, 2));
-
-      this.addCommand({
-        id: `run-${commandName}`,
-        name: `Run ${commandName}`,
-        callback: () => {
-          this.promptForParameters(scriptFile);
+        if (!commandName) {
+            new Notice('Command name is required');
+            return;
         }
+
+        // Use the folder path from settings
+        const scriptsDir = this.settings.pythonScriptFolder;
+        const moduleFolder = path.join(scriptsDir, commandName); // The folder name will be the commandName
+        const mainFile = path.join(moduleFolder, '__main__.py'); // Main file inside the folder
+        const commandFile = path.join(moduleFolder, `${commandName}.py`); // User's script
+
+        // Create the folder and file structure
+        fs.mkdirSync(moduleFolder, { recursive: true });
+
+        // Write the selected text to the ${commandName}.py file
+        fs.writeFileSync(commandFile, selectedText);
+
+        // Generate the __main__.py file to simulate sys.argv and execute the user's script
+const mainScriptContent = `
+import sys
+import os
+import base64
+import json
+import ast
+sys.path.append('${scriptsDir}')
+# Decode base64 string to the original string
+def decode_args(encoded_args):
+    decoded_str = base64.b64decode(encoded_args).decode('utf-8')
+
+    # If it's a JSON-like string, we can use json.loads() to parse it into a Python object
+    try:
+        decoded_obj = json.loads(decoded_str)  # Try to parse as JSON
+        return decoded_obj
+    except json.JSONDecodeError:
+        # If it's not a JSON string, we safely try to evaluate it using ast.literal_eval
+        try:
+            decoded_obj = ast.literal_eval(decoded_str)  # Safely evaluate literals like tuples, lists, etc.
+            return decoded_obj
+        except Exception as e:
+            try:
+                decoded_str = f"{str(decoded_str)}"
+                decoded_obj = ast.literal_eval(decoded_str)
+            except Exception as e:
+                if decoded_str.startswith("'") and decoded_str.endswith("'"):
+                    decoded_str = decoded_str[1:-1]
+                    return str(decoded_str)
+                elif decoded_str.startswith('"') and decoded_str.endswith('"'):
+                    decoded_str = decoded_str[1:-1]
+                    return str(decoded_str)
+                else:
+                    print(f"Error evaluating string {decoded_str}: {e}")
+                    return str(decoded_str)  # Fallback to returning the string if all else fails
+
+# Get the script path dynamically
+script_path = os.path.join(os.path.dirname(__file__), '${commandName}.py')
+
+with open(script_path) as file:
+    code = file.read()
+
+# Decode the arguments passed through sys.argv (if any)
+if len(sys.argv) > 1:
+    encoded_args = sys.argv[1]  # Take the first argument passed to the Python script
+    decoded_params = decode_args(encoded_args)  # Decode the argument
+    print("Decoded arguments:", decoded_params)  # Print decoded arguments
+    typed_params = []  # List to store type-checked parameters
+
+    if hasattr(decoded_params, '__iter__') and not isinstance(decoded_params, (str, bytes)):
+        # If decoded_params is iterable (like list, tuple, etc.) but not a string/bytes
+        for param in decoded_params:
+            """
+            if isinstance(param, int):
+                print(f"Integer detected: {param}")
+            elif isinstance(param, float):
+                print(f"Float detected: {param}")
+            elif isinstance(param, bool):
+                print(f"Boolean detected: {param}")
+            else:
+                print(f"Other type detected: {type(param)} - {param}")
+            """
+            typed_params.append(param)  # Append the original param without conversion
+
+        sys.argv = [sys.argv[0], *typed_params]  # Rebuild sys.argv with processed params
+        sys.argv = ['${commandName}.py', *sys.argv[1:]]
+    else:
+        """
+        # If it's a single value (not iterable or a string-like iterable)
+        if isinstance(decoded_params, int):
+            print(f"Single Integer detected: {decoded_params}")
+        elif isinstance(decoded_params, float):
+            print(f"Single Float detected: {decoded_params}")
+        elif isinstance(decoded_params, bool):
+            print(f"Single Boolean detected: {decoded_params}")
+        else:
+            print(f"Single Other type detected: {type(decoded_params)} - {decoded_params}")
+        """
+        sys.argv = [sys.argv[0], decoded_params]
+        sys.argv = ['${commandName}.py', *sys.argv[1:]]
+else:
+    sys.argv = ['${commandName}.py']
+    print("No arguments provided.")
+
+exec(code)
+
+`;
+
+
+        // Write the generated __main__.py file
+        fs.writeFileSync(mainFile, mainScriptContent);
+
+        // Read the functions dictionary file
+        const jsonFile = path.join(this.app.vault.adapter.basePath, '.obsidian', 'plugins', 'python-commander', 'functions.json');
+        let functionsDict = {};
+
+        if (fs.existsSync(jsonFile)) {
+            const rawData = fs.readFileSync(jsonFile);
+            functionsDict = JSON.parse(rawData);
+        }
+
+        // Check if the commandName already exists in the dictionary
+        if (functionsDict[commandName]) {
+            new Notice(`Command '${commandName}' already exists. Choose a unique name.`);
+            return;
+        }
+
+        // Add the new module to the functions dictionary
+        functionsDict[commandName] = moduleFolder; // Save the folder instead of the file path
+        fs.writeFileSync(jsonFile, JSON.stringify(functionsDict, null, 2));
+
+        // Add the new command to the plugin
+        this.addCommand({
+          id: `run-${commandName}`,
+          name: `Run ${commandName}`,
+          callback: () => {
+
+              const mainScriptFile = path.join(moduleFolder, '__main__.py');
+              console.log(`Command '${commandName}' triggered with path:`, mainScriptFile);
+              this.promptForParameters(mainScriptFile);
+          }
       });
 
-      new Notice(`Python script '${commandName}.py' saved and added to the functions dictionary.`);
+
+        new Notice(`Python module '${commandName}' saved in '${moduleFolder}' was added to the command palette.`);
     }).open();
   }
 
-
   //-----------------------------------------------
 
-  // --- Modified promptForParameters ---
   promptForParameters(scriptFile) {
     const selectedText = this.app.workspace.activeLeaf.view.sourceMode
-      ? this.app.workspace.activeLeaf.view.editor.getSelection()
-      : '';
+        ? this.app.workspace.activeLeaf.view.editor.getSelection()
+        : '';
+
+    // Helper function to encode the parameters string directly from modal input
+    const encodeArgs = (args) => {
+        return Buffer.from(args).toString('base64'); // Directly encode the string from modal input
+    };
 
     if (!this.settings.showModal && !this.settings.passSelectedText) {
-      // Case 1: Modal is disabled and passSelectedText is false, run without arguments
-      this.runPythonScript(scriptFile);
-    } else if (!this.settings.showModal && this.settings.passSelectedText && selectedText.trim()) {
-      // Case 2: Modal is disabled but passSelectedText is true, pass selected text as argument
-      this.runPythonScript(scriptFile, [selectedText]);
-    } else if (this.settings.showModal && !this.settings.passSelectedText) {
-      // Case 3: Modal is enabled but passSelectedText is false, get arguments from the modal
-      new ParameterInputModal(this.app, (params) => {
-        const splitParams = this.checkAndSplitParams(params);
-        this.runPythonScript(scriptFile, splitParams);
-      }).open();
-    } else if (this.settings.showModal && this.settings.passSelectedText && selectedText.trim()) {
-      // Case 4: Modal is enabled and passSelectedText is true, pass selected text first then other arguments
-      new ParameterInputModal(this.app, (params) => {
-        const splitParams = this.checkAndSplitParams(params);
-        this.runPythonScript(scriptFile, [selectedText, ...splitParams]);
-      }).open();
+        // Case 1: No modal, no selected text → Run without arguments
+        this.runPythonScript(scriptFile);
+        console.log("this is the script", scriptFile);
+    }
+    else if (!this.settings.showModal && this.settings.passSelectedText && selectedText.trim()) {
+        // Case 2: No modal, pass selected text
+        const encodedArgs = encodeArgs(`${selectedText}`); // Encode the selected text separately
+        this.runPythonScript(scriptFile, [encodedArgs]);  // Pass selected text only
+        console.log("this is the script", scriptFile);
+    }
+    else if (this.settings.showModal && !this.settings.passSelectedText) {
+        // Case 3: Modal enabled, no selected text
+        new ParameterInputModal(this.app, (params) => {
+            const encodedArgs = encodeArgs(params); // Encode the modal string directly
+            this.runPythonScript(scriptFile, [encodedArgs]);  // Pass only modal input
+            console.log("this is the script", scriptFile);
+        }).open();
+    }
+    else if (this.settings.showModal && this.settings.passSelectedText && selectedText.trim()) {
+        // Case 4: Modal enabled, pass selected text + modal input
+        new ParameterInputModal(this.app, (params) => {
+            // Combine selected text and modal input into a single string
+            const combinedParams = `${selectedText}, ${params}`;  // Adjust separator as needed (space here)
+            const encodedArgs = encodeArgs(combinedParams); // Encode the combined string
+
+            this.runPythonScript(scriptFile, [encodedArgs]);  // Pass as a single combined argument
+            console.log("this is the script", scriptFile);
+        }).open();
     }
   }
 
-  //-----------------------------------------------
-
-  // --- Function to check if the parameter is surrounded by quotes, and split if not ---
-  checkAndSplitParams(params) {
-    params = params.trim();
-    if ((params.startsWith('"') && params.endsWith('"')) || (params.startsWith("'") && params.endsWith("'"))) {
-      return [params];
-    } else {
-      return this.splitParams(params);
-    }
-  }
 
   //-----------------------------------------------
 
-  // --- Function to split parameters by commas (excluding quoted parameters) ---
-  splitParams(params) {
-    const regex = /"([^"]*)"|'([^']*)'|[^,]+/g;
-    const matches = [];
-    let match;
-    while ((match = regex.exec(params)) !== null) {
-      matches.push(match[1] || match[2] || match[0].trim());
-    }
-    return matches;
-  }
 
-  //-----------------------------------------------
-
-  // --- Modified runPythonScript function with extended output handling ---
   runPythonScript(scriptFile, params = []) {
     const pythonExecutable = this.settings.pythonExecutable;
     if (!fs.existsSync(pythonExecutable)) {
-      new Notice('Invalid Python executable path in settings.');
-      return;
+        new Notice('Invalid Python executable path in settings.');
+        return;
     }
 
     const command = [pythonExecutable, scriptFile, ...params];
@@ -244,7 +340,7 @@ class PythonCommander extends Plugin {
 
       // Log to console if command_log is true
       if (this.settings.console_log) {
-        console.log(output); // Log the output to the console
+        console.log(`Executing command: ${pythonExecutable} -c ${scriptFile}/__main__.py \n ${output}`); // Log the output to the console
       }
 
       // Handle different output modes based on settings
@@ -261,6 +357,7 @@ class PythonCommander extends Plugin {
       }
     });
   }
+
 
   //-----------------------------------------------
 
@@ -297,12 +394,11 @@ class PythonCommander extends Plugin {
         output += `${stdout}\n`;
       }
 
-      // Log the output to the console (regardless of command_log setting)
-      console.log(output);
-
       // Only log to console if command_log is enabled (if you want additional logging control)
       if (this.settings.command_log) {
         console.log('Command log enabled, output logged to console');
+        // Log the output to the console (regardless of command_log setting)
+        console.log(output);
       }
 
       // Handle output modes
@@ -319,7 +415,7 @@ class PythonCommander extends Plugin {
       }
 
       // Show notice for quick feedback
-      new Notice('Python script executed. Check output in selected mode.');
+      new Notice('Python script executed. Check output selected mode.');
     });
   }
 
@@ -350,7 +446,7 @@ class PythonCommander extends Plugin {
       const fileContent = fs.readFileSync(filePath, 'utf-8');
       const updatedContent = fileContent + output;
       fs.writeFileSync(filePath, updatedContent, 'utf-8');
-      new Notice(`Python script output has been written to '${noteName}'.`);
+      new Notice(`Python command output has been written to '${noteName}'.`);
     } else {
       new Notice(`Note '${noteName}' does not exist.`);
     }
@@ -383,23 +479,23 @@ class PythonCommander extends Plugin {
     async loadSettings() {
     const vaultPath = this.app.vault.adapter.basePath; // Get the current vault path
     const defaultSettings = {
-      pythonExecutable: 'python',
+      pythonExecutable: 'python3',
       useModal: false,
       showModal: false,
       passSelectedText: false,
       modal_out: true,
-      cursor_out: true,
+      cursor_out: false,
       outputNoteName: `${vaultPath}/Python Console.md`,
       note_out: false,
       console_log: true,
-      pythonScriptFolder: `${vaultPath}/scripts/python` // Default scripts folder
+      pythonScriptFolder: `${vaultPath}/PyCommands` // Default scripts folder
     };
 
     try {
       const data = await this.loadData();
 
       if (!data || Object.keys(data).length === 0) {
-        console.warn('Settings file is missing or empty. Creating a new one with default values.');
+        console.warn('Settings file is missing or empty. \n Creating a new one with default values \n Please see the settings.');
         this.settings = defaultSettings;
         await this.saveData(this.settings); // Create the file with default values
       } else {
@@ -412,7 +508,6 @@ class PythonCommander extends Plugin {
       await this.saveData(this.settings); // Ensure file is created
     }
   }
-
 
   //-----------------------------------------------
 
@@ -429,7 +524,7 @@ class PythonCommander extends Plugin {
 }
 
 //-----------------------------------------------
-const { dialog } = require('electron').remote; // Require Electron's dialog module
+
 
 // --- Settings Tab ---
 class PythonCommanderSettingTab extends PluginSettingTab {
@@ -443,14 +538,13 @@ class PythonCommanderSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     // Python Executable setting with Browse button
-    // Python Executable setting with Browse button
     new Setting(containerEl)
-      .setName('Python Executable')
+      .setName('Python Executable Path')
       .setDesc('Specify the path to your Python executable')
       .addText((text) =>
         text
-          .setPlaceholder('python or full path to python executable')
-          .setValue(this.plugin.settings.pythonExecutable || "python")
+          .setPlaceholder('python3 or full path to python executable')
+          .setValue(this.plugin.settings.pythonExecutable || "python3")
           .onChange((value) => {
             this.plugin.settings.pythonExecutable = value;
             this.plugin.saveSettings();
@@ -466,7 +560,7 @@ class PythonCommanderSettingTab extends PluginSettingTab {
     // Select the Python script folder (with browse button)
     new Setting(containerEl)
       .setName('Select Script Folder')
-      .setDesc('Choose the folder where Python scripts are stored')
+      .setDesc('Choose a folder to store your Python modules')
       .addText((text) =>
         text
           .setValue(this.plugin.settings.pythonScriptFolder || '')  // Show current folder path
@@ -484,8 +578,8 @@ class PythonCommanderSettingTab extends PluginSettingTab {
 
     // Show/Hide Parameter Input Modal toggle
     new Setting(containerEl)
-      .setName('Show Parameter Input Modal')
-      .setDesc('Enable or disable the parameter input modal before running a script')
+      .setName('Show Parameter Input Pop Up')
+      .setDesc('Enable or disable the parameter input pop up when running a command')
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.showModal)
@@ -498,7 +592,7 @@ class PythonCommanderSettingTab extends PluginSettingTab {
     // Pass selected text as first argument toggle
     new Setting(containerEl)
       .setName('Pass Selected Text as First Argument')
-      .setDesc('Enable or disable passing the selected text as the first argument to the Python script')
+      .setDesc('Enable or disable passing the selected text as the first argument to the Python command')
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.passSelectedText)
@@ -510,8 +604,8 @@ class PythonCommanderSettingTab extends PluginSettingTab {
 
     // Show Output in Modal toggle
     new Setting(containerEl)
-      .setName('Show Output in Modal')
-      .setDesc('Enable or disable showing the script output in a modal/pop up dialog')
+      .setName('Show Output in a Pop Up')
+      .setDesc('Enable or disable showing the command output in a pop up dialog')
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.modal_out)
@@ -524,7 +618,7 @@ class PythonCommanderSettingTab extends PluginSettingTab {
     // Write Output to Active Note toggle
     new Setting(containerEl)
       .setName('Write Output to Active Note')
-      .setDesc('Enable or disable writing the script output to the active note at the cursor position')
+      .setDesc('Enable or disable writing the script output to the end of the active note')
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.cursor_out)
@@ -550,7 +644,7 @@ class PythonCommanderSettingTab extends PluginSettingTab {
     // Specify the note to write the output to
     new Setting(containerEl)
       .setName('Write Output to Specified Note')
-      .setDesc('Enable or disable writing the script output to a specific note')
+      .setDesc('Enable or disable writing the command output to a specific note')
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.note_out)
@@ -562,7 +656,7 @@ class PythonCommanderSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Select Output Note')
-      .setDesc('Choose the markdown file where the output will be written')
+      .setDesc('Choose the Note where the command output will be written ex: My_Console.md')
       .addText((text) =>
         text
           .setValue(this.plugin.settings.outputNoteName)  // Este valor debe estar actualizado
@@ -581,11 +675,11 @@ class PythonCommanderSettingTab extends PluginSettingTab {
     // Manage Functions section
     new Setting(containerEl)
       .setName('Manage Functions')
-      .setDesc('Manage your saved Python functions');
+      .setDesc('Manage your saved Python Commands. Any command deleted will be removed from the command palette and the module erased from the the scripts folder');
 
     // Display current functions
     this.loadFunctionsAndDisplay(containerEl);
-  }
+    }
     // Open file dialog to select a Python executable
     async openFilePickerForPythonExecutable(containerEl) {
       try {
@@ -687,34 +781,45 @@ class PythonCommanderSettingTab extends PluginSettingTab {
     }
 
     removeFunction(functionName, scriptFilePath, containerEl) {
-      const jsonFile = path.join(this.app.vault.adapter.basePath, '.obsidian', 'plugins', 'python-commander','functions.json');
+      const jsonFile = path.join(this.app.vault.adapter.basePath, '.obsidian', 'plugins', 'python-commander', 'functions.json');
       let functionsDict = {};
 
       if (fs.existsSync(jsonFile)) {
-        const rawData = fs.readFileSync(jsonFile);
-        functionsDict = JSON.parse(rawData);
+          const rawData = fs.readFileSync(jsonFile);
+          functionsDict = JSON.parse(rawData);
       }
 
-      delete functionsDict[functionName];
-      const functionFolder = path.dirname(scriptFilePath);
-      if (fs.existsSync(scriptFilePath)) {
-        fs.unlinkSync(scriptFilePath);
-      }
-      if (fs.existsSync(functionFolder) && fs.readdirSync(functionFolder).length === 0) {
-        fs.rmdirSync(functionFolder);
+      // Remove the function entry from the dictionary
+      if (functionsDict[functionName]) {
+          // Get the folder path for this function
+          const functionFolder = functionsDict[functionName];
+
+          // Remove the function folder (if it exists)
+          if (fs.existsSync(functionFolder)) {
+              fs.rmSync(functionFolder, { recursive: true, force: true });
+              console.log(`Function folder '${functionFolder}' and its contents have been removed.`);
+          }
+
+          // Remove the function from the dictionary
+          delete functionsDict[functionName];
+
+          // Update the functions.json file
+          fs.writeFileSync(jsonFile, JSON.stringify(functionsDict, null, 2));
       }
 
+      // Remove the command from the plugin
       this.plugin.removeCommand(`run-${functionName}`);
 
-      fs.writeFileSync(jsonFile, JSON.stringify(functionsDict, null, 2));
-
+      // Refresh the UI
       containerEl.empty();
       this.display();
+
       new Notice(`Function '${functionName}' has been removed.`);
-    }
+  }
+
 }
 
 
 module.exports = PythonCommander;
 
- 
+
