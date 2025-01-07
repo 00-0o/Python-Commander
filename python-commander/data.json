@@ -1,12 +1,11 @@
 {
   "pythonExecutable": "python3",
-  "useModal": false,
   "showModal": false,
   "passSelectedText": false,
   "modal_out": true,
-  "cursor_out": true,
+  "cursor_out": false,
   "outputNoteName": "",
-  "note_out": true,
+  "note_out": false,
   "console_log": true,
   "pythonScriptFolder": "PyCommands"
 }
