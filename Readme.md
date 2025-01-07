@@ -22,59 +22,89 @@ Down bellow you have the doc/tutorial for now. Giff banners (Video tutorial comm
  # <center><font color="#00b050" size="6">Python Comander Introduction.</font></center>
 
 Python Commander has two main execution modes.
-Immediate Mode and Command mode (CM).
+Immediate Mode and Command mode.
 
 The immediate mode is straight forward, just select any text that is valid python code and run it. 
 It will execute and return whatever your code returns to the output options you have selected in the settings.
 
-The command mode, allow you in the same way to select any valid code just like the immediate mode, but instead of run the code directly, it saves the code as a python module to the scripts folder you selected in the settings, and create a command in the command palette from where you can launch it afterwards. 
+The command mode, allow you in the same way to select any valid code just like the immediate mode, but instead of run the code directly, it saves the code as a python module to the PyCommands folder you selected in the settings, and create a command in the command palette from where you can launch it afterwards. 
 
 The command mode is more flexible, allowing you to pass the selected text as argument to the script  (can't be done in immediate mode), and to pass more arguments to your script from the modal / pop up (if set true in the settings). 
+
 This way you can run your scripts almost anywhere within obsidian by having all your scripts available in the command palette.
 
 Recent changes in the design of python commander allow user to import already created commands to new ones (commands are python modules after all). 
+
 The way you do it is just like you would do with any python module: import {your command name}. 
 It is better to do: "from {your command name} import {your command name}" 
-Then call it like: {your <u>command</u> name}.{your <u>function</u> name}() see the examples down bellow.
+Then call it like: {your <u>command</u> name}.{your <u>function</u> name}()
 
-There is a few other ways to import your own libraries to use in your commands. 
-One is to install your modules in your environment using pip, but this way require packaging your scripts as a pip installable module using setuptools, not too complicated but not that straight forward.
-The other way is to copy the modules you want to import to the same folder where your command/module was created. 
+See the examples down bellow.
+
+There is a few other ways to import your own libraries to use within your commands.
+
+One is to install your modules in your environment using pip, but this way require packaging your scripts as a pip installable module using setuptools (not too complicated but not that straight forward.)
+
+The other way is to copy the modules you want to import to the same folder where your command/module was created.
+ 
 Then just do from .{your other script} import your_import    
 ##### from .your_other_script import your_import 
 
 Python Commander features already various output modes that can be combined in the settings to visualize your data at your convenience, as well as some input modes.
+
 The output modes are:
 - <font color="#4bacc6">Note output mode:</font> outputs to the note you choose in the settings
 - <font color="#4bacc6">Console output mode:</font> outputs to the console log with some extra data, like the paths and arguments executed, useful for debugging 
 - <font color="#4bacc6">Current note output mode:</font> outputs to the last line of the active note
 - <font color="#4bacc6">Modal output mode:</font> outputs to a modal / pop up dialog in the screen
 
+
 The input modes are:
 - <font color="#4bacc6">Text input mode:</font> it passes the selected text as a system argument (sys.argv) to the script execution.
 - <font color="#4bacc6">Modal input mode:</font> it offers a modal / pop up text field where you can type extra arguments to pass as system arguments (sys.argv) to the execution. ( note that if text input mode is true the first argument (sys.argv[1]) is the selected text ) 
 - <font color="#4bacc6">None input mode:</font> if both modes are set to false, no extra arguments are passed to the execution other than the ones that might be hard coded in the script
 
-Remember always to call your functions!
+### Remember always to call your functions!
+
 if you defined a function call it, otherwise Python Commander will run your scripts but you will see no output, and likely no errors either.
+
 If you think your script is not running and don't know why, check that you have actually called something. 
+
 def your_func():  and call your_func() 
 
 The last feature remaining to discus is command managing.
-Once you register a command name you can't register other command with the same name, unless you remove that entry from the command library. This was thought to prevent accidental overriding of commands. (might have a setting option in the future)
-If you make a mistake with the naming or the code, you can remove the commands from the palette in the settings. There you'll find an entry for each command present in your command library, with a button to remove it, ( removing a command will delete the files from the scripts folder ), alternatively  to edit your scripts, navigate to your scripts folder and edit them in any text editor, but don't rename the files or Python Commander will not be able to find them.  
-The command folders are hidden folders inside your scripts folder, one for each command you have registered, this is to not overpopulate the vault with unnecessary folders. (this might change in the future as i consider other approaches, but for now this is the way, if there's changes they will be notified in this readme)  
+
+Once you register a command name you can't register other command with the same name, unless you remove that entry from the command library. 
+
+This was thought to prevent accidental overriding of commands. (might have a setting option in the future)
+
+If you make a mistake with the naming or the code, you can remove the commands from the palette in the settings. 
+
+There you'll find an entry for each command present in your command library, with a button to remove it, ( removing a command will delete the files from the scripts folder ). 
+
+Alternatively to edit your scripts, navigate to your scripts folder and edit them in any text editor, but don't rename the files or Python Commander will not be able to find them.
+  
+The command folders are inside your scripts folder from settings, one for each command you have registered. 
 
 
 <center><font color="#00b050" size="6">How to use Python Commander</font></center>
+
 First you have to set the path to your python executable in the settings.
+
 Click the Browse button, navigate to your python executable, and select it.
-You need to set the path where you want your scripts to be stored, by default it is set to vault/scripts/python but you can set this whatever you want even outside of your vault, hidden folders are valid too.
+
+You need to set the path where you want your scripts to be stored, by default it is set to vault/PyCommands but you can set this whatever you want even outside of your vault, hidden folders are valid too.
+
 Click the Browse button, navigate to that path, and select it.
+
 The rest of the settings are optional and to your convenience, try out what suits your needs better.
+
 The only setting needed to set (if you are planing to use it), is the Output Note. 
+
 If you want to output to a specific note, like ex: "Console.md", you have to create it first and then select it from the menu. 
+
 Click the Browse button, navigate to your Note, and select it.
+
 With that you are ready to go!
 
 ### <font color="#00b050">Immediate mode (IM) Python "Run Selected Text"</font>
