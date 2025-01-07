@@ -164,8 +164,8 @@ my_first_command()            #    REMEMBER to CALL your function!!
 ##### <font color="#e36c09">4 º Run your command: </font>
 - To run your Command press (ctrl + p) to open the command palette, search for Python Commander Run: {your command name}
 
-<font color="#00b050"><center><font size="8">  ¡¡Congratulations!! </font></center></font>
-<font color="#00b050"><center><font size="5">you already know how to use Python Commander to run your scripts from Obsidian</font></center></font>
+# ¡¡Congratulations!!
+### you already know how to use Python Commander to run your scripts from Obsidian
 
 
 ##### <font color="#00b050">Making and importing your commands</font>
@@ -202,3 +202,10 @@ my_import.imported_function("Hello from my imported module!")
 - Then open your command palette (ctrl + p) and find <font color="#c0504d">Python Commander Run:  my_import_er</font>
 It should output: "Hello from my imported module!"
 
+
+
+
+
+
+
+___
